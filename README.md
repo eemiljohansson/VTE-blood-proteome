@@ -18,21 +18,22 @@
 
 This repository contains the code to recreate the figures in the manuscript: **The Blood Proteome in Venous Thromboembolism** by Johansson E et al. (2027).
 
-The goal is to characterize the blood plasma proteome of both acute and post-treatment venous thromboembolism (VTE) patients from a pan-disease perspective.
+The goal is to characterize the blood plasma proteome in both acute and post-venous thromboembolism (VTE) patients from various disease groups.
 
-The repository includes scripts for differential abundance analysis, feature selection, and visualization of the results.
+The repository includes scripts for data exploration, differential abundance analysis, machine learning, and visualization of the results.
 
 ## Data Description
 
-This study is based on plasma proteome profiles from over 8,000 individuals, encompassing both healthy individuals and patients across a wide spectrum of diseases. Key characteristics of the dataset include:
+This study is based on plasma proteome profiles from over 6,000 individuals, encompassing both healthy individuals and patients across a wide spectrum of diseases. This work is associated with the human pan-disease blood atlas, published in Science (2025) by Álvez MB et al. (https://www.science.org/doi/10.1126/science.adx2678).
 
-- **Cohort composition**: VTE samples were collected at the Karolinska hospital in Stockholm, Sweden. Comparison groups include cross-sectional disease cohorts (Human Disease Blood Atlas, U-CAN), and a prospective disease cohort (UKB-PPP).
-- **Proteomic platform**: protein profiling was performed using Proximity Extension Assay (PEA), a high-throughput, antibody-based method that enables simultaneous quantification of thousands of proteins from minimal plasma volumes.
+- **Cohort composition**: the VTE samples, part of Venous thromboEmbolism BIOmarker Study (VEBIOS), were collected at the Karolinska hospital in Stockholm, Sweden. Comparison groups include cross-sectional disease cohorts (Human Disease Blood Atlas).
+- **Proteomic platform**: protein profiling was performed using the Olink Explore 1536 platform, which utilizes the Proximity Extension Assay (PEA) technology. A high-throughput, antibody-based method that enables simultaneous quantification of thousands of proteins from minimal plasma volumes.
 
-The analysis employed a combination of univariate and multivariate techniques to uncover key health and disease-related protein patterns. Key components include:
+The analysis employed a combination of univariate techniques to uncover key VTE-related protein patterns. Key components include:
 
 - **Differential abundance analysis**: applied to all measured proteins to identify significant changes in abundance of VTE compared to comparison groups.
-- **Machine learning**: lasso-based models were applied for disease classification.
+- **Feature selection by machine learning**: Combining results from regularized regression models (Least Absolute Shrinkage and Selection Operator (LASSO), Elastic Net, and Ridge regression) and Random Forest.
+- **Compact protein-panel selection**: Combining LASSO and Ridge regression to identify a minimal set of proteins that can accurately classify VTE from other disease groups.
 
 ## Results & insights
 
@@ -47,14 +48,12 @@ To explore the code used for the analysis described in the manuscript:
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/eemiljohansson/Thrombosis-profiling.git
-   cd Human-blood-atlas
+   git clone https://github.com/eemiljohansson/VTE-blood-proteome.git
    ```
 2. Install R dependencies using renv:
    ```R
    renv::restore()
    ```
-
 
 ## Folder structure
 
@@ -67,9 +66,11 @@ Folder structure:
 
 ```bash
 📁 Thrombosis-profiling/
-├── 📂 scripts/                # Core analysis scripts (Quarto)
-│   ├── 01_differential_abundance_analysis.qmd         # Differential abundance in VTE vs controls
-│   ├── 02_feature_selection.qmd                       # Disease classification using ML
+├── 📂 scripts/                 # Core analysis scripts (Quarto)
+│   ├── 01_data_exploration.qmd         # Exploring the data 
+│   ├── 02_differential_analysis.qmd    # Comparing VTE cohorts to comparison groups
+│   ├── 03_feature_selection.qmd        # Feature selection by machine learning
+│   ├── 04_compact_protein_panel.qmd    # Creation of compact machine learning models for VTE classification
 │   └── 📂 functions/          # Helper functions for data processing and analysis
 ├── 📂 plots/                  # Output figures from analyses
 ├── 📂 tables/                 # Output tables from analyses
@@ -86,3 +87,4 @@ For questions or inquiries, please contact:
 
 Emil Johansson
 GitHub: [eemiljohansson](https://github.com/eemiljohansson)
+Email: emil.johansson@scilifelab.se
