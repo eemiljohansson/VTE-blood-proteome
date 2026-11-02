@@ -3,3 +3,352 @@ title: "01_data_exploration"
 format: html
 ---
 
+# Load libraries
+
+```{r}
+# Loading libraries
+library(tidyverse)
+library(ggridges)
+library(ggbeeswarm)
+```
+
+# Source scripts
+
+```{r}
+source("../scripts/functions/functions.R")
+```
+
+# Read data
+
+```{r}
+# Metadata
+metadata <- read_csv("../data/metadata.csv")
+
+# Olink Explore 1536 data
+data_long <- read_csv("../data/data_long.csv")
+data_wide <- read_csv("../data/data_wide.csv")
+```
+
+# Analysis setup
+
+## Define subsets
+
+```{r}
+# Acute VTE
+acute_vte <- "Acute venous thromboembolism"
+
+# Post-VTE
+post_vte <- "Post venous thromboembolism"
+
+# Healthy
+healthy <- "Healthy"
+
+# ACS
+acs <- "Acute coronary syndrome"
+
+# Acute inflammatory inflammatory response
+acute_phase <- c("E.coli pyelonephritis", 
+                 "Pneumococcal pneumonia", 
+                 "Staphylococcus aureus bacteremia", 
+                 "Streptococcal soft tissue infection")
+
+# All other cardiovascular diseases
+pan_cvd     <- c("Abdominal aortic aneurysm", 
+                 "Coronary artery calcification", 
+                 "Acute coronary syndrome")
+
+# All other diseases
+pan_disease <- metadata |> 
+  distinct(Disease) |> 
+  pull(Disease) |> 
+  setdiff(c(
+    # Remove VTE cohorts
+    "Acute venous thromboembolism", 
+            "Post venous thromboembolism", 
+    # Remove healthy individuals
+            "Healthy",
+    # Remove Pediatric diseases
+    "Pediatric CNS tumor",
+    "Pediatric bone tumor",
+    "Pediatric retinoblastoma",
+    "Pediatric lymphoma",
+    "Pediatric neuroblastoma",
+    "Pediatric sarcoma",
+    "Pediatric kidney tumor",
+    "Pediatric diffuse astrocytic and oligodendro. tumor",
+    "Pediatric long COVID",
+    "Pediatric systemic inflammatory disease"
+    ))
+
+# All available cancers
+pan_cancer  <- metadata |> 
+  filter(Class == "Cancer") |> 
+  distinct(Disease) |> 
+  pull(Disease)
+
+# High risk cancers
+high_risk_cancer <- c("Pancreatic cancer", 
+                      "Colorectal cancer",
+                      "Glioma",
+                      "Ovarian cancer",
+                      "Lung cancer", 
+                      "Acute myeloid leukemia", 
+                      "Chronic lymphocytic leukemia", 
+                      "Hepatocellular cancer")
+```
+
+## Levels
+
+```{r}
+all_class_levels <- c("Autoimmune", 
+                      "Cancer", 
+                      "Cardiovascular", 
+                      "Infection", 
+                      "Metabolic", 
+                      "Psychiatric", 
+                      "Healthy")
+
+category_level <- c("Acute venous thromboembolism", 
+                    "Post venous thromboembolism", 
+                    "Healthy", 
+                    "Pan-Cardiovascular", 
+                    "Pan-Disease")
+
+all_category_levels <- c("Acute VTE", 
+                         "Post-VTE", 
+                         "Healthy", 
+                         "Pan-Disease", 
+                         "Pan-Autoimmune", 
+                         "Pan-Cancer", 
+                         "Pan-Cardiovascular", 
+                         "Pan-Infection", 
+                         "Pan-Metabolic",
+                         "Pan-Psychiatric")
+```
+
+## Themes & pallets
+
+```{r}
+# ============================================================
+# 1. Define cohorts
+# ============================================================
+
+cohort_definitions <- list(
+  "Acute VTE"                   = acute_vte,
+  "Post-VTE"                    = post_vte,
+  "Acute coronary syndrome"     = acs,
+  "Acute inflammatory response" = acute_phase,
+  "Healthy"                     = healthy,
+  "Cardiovascular diseases"     = pan_cvd,
+  "Pan-Disease"                 = pan_disease,
+  "Pan-Cancer"                  = pan_cancer,
+  "High-risk cancer"            = high_risk_cancer
+)
+
+# ============================================================
+# 2. Cohort order — displayed from TOP to BOTTOM
+# ============================================================
+
+cohort_order <- c(
+  "Acute VTE",
+  "Post-VTE",
+  "Healthy",
+  "Cardiovascular diseases",
+  "Pan-Disease",
+  "Pan-Cancer",
+  "High-risk cancer",
+  "Acute inflammatory response",
+  "Acute coronary syndrome"
+)
+
+# ============================================================
+# 3. Cohort colours
+# ============================================================
+
+cohort_colors <- c(
+  "Acute VTE"                   = "#FC8D62",
+  "Post-VTE"                    = "#FC8D62",
+  "Healthy"                     = "#CEB18A",
+  "Cardiovascular diseases"     = "#FC8D62",
+  "Pan-Disease"                 = "#A8A8A8",
+  "Pan-Cancer"                  = "#8D9FCA",
+  "High-risk cancer"            = "#8D9FCA",
+  "Acute inflammatory response" = "#FFD82F",
+  "Acute coronary syndrome"     = "#FC8D62"
+)
+
+category_pal <- c(
+  "Acute VTE" = "#E08D8D",
+  "Post-VTE" = "#CE958A",
+  "Healthy" = "#CEB18A",
+  "Pan-Disease" = "#B8B8B8",
+  "Pan-Autoimmune" = "#DEBCD1",
+  "Pan-Cancer" = "#BDC3D3",
+  "Pan-Cardiovascular" = "#E8BCAD",
+  "Pan-Infection" = "#E7D9A1",
+  "Pan-Metabolic" = "#DDD1BF",
+  #"Pan-Pediatric" = "#C6D8A9",
+  "Pan-Psychiatric" = "#AFD1C5"
+)
+
+category_pal_out <- c(
+  "Acute VTE" = "#FF6060",
+  "Post-VTE" = "#C2341A",
+  "Healthy" = "#CEB18A",
+  "Pan-Disease" = "#A8A8A8",
+  "Pan-Autoimmune" = "#E789C3",
+  "Pan-Cancer" = "#8D9FCA",
+  "Pan-Cardiovascular" = "#FC8D62",
+  "Pan-Infection" = "#FFD82F",
+  "Pan-Metabolic" = "#E5C494",
+  #"Pan-Pediatric" = "#A5D853",
+  "Pan-Psychiatric" = "#66C2A5"
+)
+
+class_pal <- c(
+  "Autoimmune" = "#DEBCD1",
+  "Cancer" = "#BDC3D3",
+  "Cardiovascular" = "#E8BCAD",
+  "Infection" = "#E7D9A1",
+  "Metabolic" = "#DDD1BF",
+  "Pediatric" = "#C6D8A9",
+  #"Psychiatric" = "#AFD1C5",
+  "Healthy" = "#CEB18A"
+)
+
+class_pal_out <- c(
+  "Autoimmune" = "#E789C3",
+  "Cancer" = "#8D9FCA",
+  "Cardiovascular" = "#FC8D62",
+  "Infection" = "#FFD82F",
+  "Metabolic" = "#E5C494",
+  #"Pediatric" = "#A5D853",
+  "Psychiatric" = "#66C2A5",
+  "Healthy" = "#CEB18A"
+)
+
+# ============================================================
+# 4. Check that all selected cohorts have definitions and colours
+# ============================================================
+
+stopifnot(
+  !anyDuplicated(cohort_order),
+  all(cohort_order %in% names(cohort_definitions)),
+  all(cohort_order %in% names(cohort_colors))
+)
+
+# Theme
+theme_vte <- function(base_size = 16, base_family = NULL) {
+  theme_minimal(base_size = base_size, base_family = base_family) +
+    theme(
+      text            = element_text(size = base_size, family = base_family),
+      plot.title      = element_blank(),        # remove title
+      plot.subtitle   = element_blank(),
+      plot.caption    = element_blank(),
+      legend.position = "none",                 # remove legend
+      axis.title      = element_text(size = rel(1.2)),
+      axis.text       = element_text(size = rel(1.05)),
+      strip.text      = element_text(size = rel(1.05), face = "bold"),
+      panel.grid.major = element_blank(),       # remove major gridlines
+      panel.grid.minor = element_blank(),       # remove minor gridlines
+      panel.background = element_blank(),       # clean background
+      plot.background  = element_blank()        # remove plot background
+    )
+}
+```
+
+# Sex and Age distribution
+
+```{r}
+# Utilizing the functions defined in functions.R
+source("../scripts/functions/functions.R")
+
+# Sex distribution
+p_sex <- plot_sex_distribution(
+  metadata = metadata,
+  cohorts = cohort_definitions,
+  cohort_order = cohort_order,
+  show_total = TRUE
+)
+
+p_sex
+
+# Age distribution
+p_age <- plot_age_distribution(
+  metadata = metadata,
+  cohorts = cohort_definitions,
+  cohort_order = cohort_order,
+  age_var = "Age",
+  cohort_colors = cohort_colors
+)
+
+# Show individually
+p_age
+p_sex
+
+# Combine; cohort labels appear on the left panel only
+p_combined <- (
+  p_sex |
+    (
+      p_age +
+        theme(
+          axis.text.y = element_blank(),
+          axis.ticks.y = element_blank()
+        )
+    )
+) +
+  plot_layout(widths = c(1.5, 1))
+
+p_combined
+
+ggsave(
+  filename = "../plots/pdf/sex_age_distribution.pdf",
+  plot = p_combined,
+  width = 7,
+  height = 8
+)
+```
+
+# Example boxplots
+
+## 2x2
+
+### Comparison style
+
+```{r}
+source("../scripts/functions/functions.R")
+
+highlighted_proteins <- c(
+  "",
+  "",
+  "",
+  ""
+)
+
+boxplots_examples <- plot_protein_boxplots(
+  data_long = data_long,
+  metadata = metadata,
+  highlighted_proteins = highlighted_proteins,
+  cohorts = cohort_definitions,
+  cohort_order = cohort_order,
+  cohort_colors = cohort_colors,
+  ncol = 2
+)
+
+boxplots_examples
+
+ggsave(
+  filename = "../plots/pdf/boxplot examples.pdf",
+  plot = boxplots_examples,
+  width = 8,
+  height = 8
+)
+```
+
+# SessionInfo
+
+```{r}
+sessionInfo()
+```
+
+End of file.
